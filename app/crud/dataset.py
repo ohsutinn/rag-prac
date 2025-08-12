@@ -3,7 +3,6 @@ from fastapi import Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.session import get_db
 from app.models.dataset import DatasetEntity, DatasetORM, to_entity, to_orm
 
 

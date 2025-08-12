@@ -22,8 +22,3 @@ AsyncSessionFactory = async_sessionmaker(
     autoflush=False,
     class_=AsyncSession,
 )
-
-# 4) FastAPI Depends용 세션 의존성
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    async with AsyncSessionFactory() as session:
-        yield session
