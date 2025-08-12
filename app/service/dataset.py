@@ -1,16 +1,17 @@
 import uuid
 from datetime import datetime, timezone
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.config import settings
 from app.crud.dataset import DatasetCRUD
 from app.models.dataset import DatasetEntity
 
 
 class DatasetService:
-    def __init__(self, db, s3):
-        self.db = db
-        self.crud = DatasetCRUD(db)
+    def __init__(self, s3, crud: DatasetCRUD):
         self.s3 = s3
+        self.crud = crud
 
     async def generate_pre_signed_url(self, file_name: str):
 
@@ -51,5 +52,4 @@ class DatasetService:
 
         entity = DatasetEntity(**entity_kwargs)
 
-        async with self.db.begin():
-            return await self.crud.save(entity)
+        return await self.crud.save(entity)
