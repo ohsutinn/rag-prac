@@ -1,23 +1,18 @@
 import uuid
-import boto3
-from botocore.config import Config
 from datetime import datetime, timezone
 
 from app.core.config import settings
-
-s3 = boto3.client(
-    "s3",
-    endpoint_url=settings.MINIO_ENDPOINT,
-    aws_access_key_id=settings.MINIO_ACCESS_KEY,
-    aws_secret_access_key=settings.MINIO_SECRET_KEY,
-    config=Config(s3={"addressing_style": "path"}),
-    region_name=settings.REGION,
-)
+from app.crud.dataset import DatasetCRUD
+from app.models.dataset import DatasetEntity
 
 
-class dataset_service:
+class DatasetService:
+    def __init__(self, db, s3):
+        self.db = db
+        self.crud = DatasetCRUD(db)
+        self.s3 = s3
 
-    async def generate_pre_signed_url(file_name: str):
+    async def generate_pre_signed_url(self, file_name: str):
 
         # key 생성
         date = datetime.now(timezone.utc).strftime("%Y/%m/%d")
@@ -26,7 +21,7 @@ class dataset_service:
 
         # pre_signed_url 생성
         try:
-            url = s3.generate_presigned_url(
+            url = self.s3.generate_presigned_url(
                 ClientMethod="put_object",
                 Params={
                     "Bucket": settings.BUCKET,
@@ -39,3 +34,22 @@ class dataset_service:
             return {"message": "presigned URL 생성 실패", "error": str(e)}
 
         return {"key": key, "upload_url": url}
+
+    async def confirm_upload(self, key: str):
+
+        head = self.s3.head_object(Bucket=settings.BUCKET, Key=key)
+
+        entity_kwargs = {
+            "bucket": settings.BUCKET,
+            "object_key": key,
+            "filename": key.split("/")[-2],
+            "content_type": head.get("ContentType"),
+            "size_bytes": head.get("ContentLength"),
+            "etag": head.get("ETag", "").strip('"'),
+            "version_id": head.get("VersionId"),
+        }
+
+        entity = DatasetEntity(**entity_kwargs)
+
+        async with self.db.begin():
+            return await self.crud.save(entity)
