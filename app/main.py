@@ -1,13 +1,16 @@
 from fastapi import Depends, FastAPI, HTTPException, status
 from sqlalchemy import text
 
+from app.api.v1 import dataset_router
 from app.database.session import get_db
 
 app = FastAPI(
-    title="API",
+    title="RAG-PRAC",
     description="API for the application",
     version="1.0.0",
 )
+
+app.include_router(dataset_router.router)
 
 
 @app.get(
