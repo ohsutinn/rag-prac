@@ -1,8 +1,17 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request, status
 from sqlalchemy import text
 
 from app.api.v1 import dataset_router
 from app.containers.main import MainContainer
+from app.core.fastapi.middleware import AsyncSessionMiddleware
+from app.database.session import async_engine
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    await async_engine.dispose()
 
 
 def create_app() -> FastAPI:
@@ -10,21 +19,20 @@ def create_app() -> FastAPI:
         title="RAG-PRAC",
         description="API for the application",
         version="1.0.0",
+        lifespan=lifespan,
     )
 
     container = MainContainer()
     app.container = container
 
-    app.add_event_handler("startup", container.init_resources)   # 서버 시작 시 리소스 준비
-    app.add_event_handler("shutdown", container.shutdown_resources) # 서버 종료 시 리소스 정리
-
+    app.add_middleware(AsyncSessionMiddleware)
     app.include_router(dataset_router.router)
-    
+
     @app.get("/health", status_code=status.HTTP_200_OK, summary="Health check")
     async def health_check(request: Request):
         infra = request.app.container.infra()
 
-        db = await infra.db_session()
+        db = infra.session()
         try:
             await db.execute(text("SELECT 1"))
             return {"status": "ok", "db": "ok"}
@@ -35,6 +43,7 @@ def create_app() -> FastAPI:
             )
         finally:
             await db.close()
+            
 
     return app
 
