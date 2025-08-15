@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.fastapi.transaction import transactional
 from app.crud.dataset import DatasetCRUD
 from app.models.dataset import DatasetEntity
 
@@ -36,6 +37,7 @@ class DatasetService:
 
         return {"key": key, "upload_url": url}
 
+    @transactional(commit=True)
     async def confirm_upload(self, key: str):
 
         head = self.s3.head_object(Bucket=settings.BUCKET, Key=key)
