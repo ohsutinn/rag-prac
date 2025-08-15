@@ -1,9 +1,6 @@
-from typing import Optional
-from fastapi import Depends
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.dataset import DatasetEntity, DatasetORM, to_entity, to_orm
+from app.models.dataset import DatasetEntity, to_entity, to_orm
 
 
 class DatasetCRUD:
@@ -12,9 +9,7 @@ class DatasetCRUD:
 
     async def save(self, entity: DatasetEntity) -> DatasetEntity:
         orm = to_orm(entity)
-
         self.session.add(orm)
         await self.session.flush()
         await self.session.refresh(orm)
-
         return to_entity(orm)
