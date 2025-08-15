@@ -6,7 +6,8 @@ from app.containers.domains import DomainsContainer
 class MainContainer(DeclarativeContainer):
     wiring_config = WiringConfiguration(
         packages=[
-            "app.api.v1"
+            "app.api.v1",
+            "app.core.fastapi",
         ]
     )
     
