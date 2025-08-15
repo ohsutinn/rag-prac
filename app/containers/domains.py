@@ -8,13 +8,12 @@ class DomainsContainer(containers.DeclarativeContainer):
     # Repositories 
     dataset_crud = providers.Factory(
         DatasetCRUD,
-        session=infra.db_session,
+        session=infra.session,
     )
 
     # Services
     dataset_service = providers.Factory(
         DatasetService,
-        db=infra.db_session,
         s3=infra.s3,
         crud=dataset_crud
     )
