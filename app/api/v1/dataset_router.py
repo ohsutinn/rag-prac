@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, File, UploadFile, status
 from dependency_injector.wiring import inject, Provide
 
-from app.containers.main import MainContainer
 from app.schemas.dataset import (
     DatasetResponse,
     IngestCallbackRequest,
@@ -23,7 +22,7 @@ router = APIRouter(prefix="/v1/datasets", tags=["datasets"])
 @inject
 async def generate_pre_signed_url(
     file: UploadFile = File(...),
-    service: DatasetService = Depends(Provide[MainContainer.domains.dataset_service]),
+    service: DatasetService = Depends(Provide["domains.dataset_service"]),
 ):
     result = await service.generate_pre_signed_url(file.filename)
     return PresignedUrlResponse(**result)
@@ -38,7 +37,7 @@ async def generate_pre_signed_url(
 @inject
 async def confirm_upload(
     req: IngestCallbackRequest,
-    service: DatasetService = Depends(Provide[MainContainer.domains.dataset_service]),
+    service: DatasetService = Depends(Provide["domains.dataset_service"]),
 ):
     entity = await service.confirm_upload(req.key)
     return DatasetResponse.model_validate(entity)
